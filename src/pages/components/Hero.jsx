@@ -1,30 +1,19 @@
 import React from 'react'
-import { PhoneIcon, MailIcon, LockClosedIcon } from '@heroicons/react/solid'
+import { Link } from 'react-scroll'
 
 import bgImg from '../assets/cyber-bg.png'
 
 const Hero = () => {
     return (
-        <div name='home' className='w-full h-screen bg-zinc-200 flex flex-col justify-between'>
+        <div name='home' className='w-full h-screen bg-slate-900 flex flex-col justify-between'>
             <div className='grid md:grid-cols-2 max-w-[1240px] m-auto'>
                 <div className='flex flex-col justify-center md:items-start w-full px-2 py-8'>
                     <p className='text-2xl'>Secure & Anonymous Platform</p>
-                    <h1 className='py-3 text-5xl md:text-7xl font-bold'>Privsea Email/VPN</h1>
-                    <p className='text-2xl'>No Logs & No Information needed.</p>
-                    <button className='py-3 px-6 sm:w-[60%] my-4'>Get Started</button>
+                    <h1 className='py-3 text-5xl md:text-7xl font-bold'>Privsea VPN</h1>
+                    <Link to='pricing' className='py-5 px-8 sm:w-[60%] my-4 bg-indigo-700 rounded-lg text-white cursor-pointer text-center hover:no-underline' smooth={true} offset={-50} duration={500}>Get Started</Link>
                 </div>
                 <div>
                     <img className='w-full' src={bgImg} alt="/" />
-                </div>
-                <div className='absolute flex flex-col py-8 md:min-w-[760px] bottom-[5%]
-            mx-1 md:left-1/2 transform md:-translate-x-1/2 bg-zinc-200
-            border border-slate-300 rounded-xl text-center shadow-xl'>
-                    <p>Data Services</p>
-                    <div className='flex justify-between flex-wrap px-4'>
-                        <p className='flex px-4 py-2 text-slate-500'><MailIcon className='h-6 text-indigo-600' /> Email</p>
-                        <p className='flex px-4 py-2 text-slate-500'><LockClosedIcon className='h-6 text-indigo-600' /> VPN</p>
-                        <p className='flex px-4 py-2 text-slate-500'><PhoneIcon className='h-6 text-indigo-600' /> SMS/VoIP</p>
-                    </div>
                 </div>
             </div>
         </div>

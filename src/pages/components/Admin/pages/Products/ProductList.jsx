@@ -145,10 +145,10 @@ const ProductList = () => {
     if (error) return <div className="text-center mt-10 text-red-500">{error}</div>;
 
     return (
-        <div className="flex flex-col items-center">
-            <table className="min-w-full text-gray-700 mb-10">
+        <div className="flex flex-col items-center text-neutral-100">
+            <table className="min-w-full mb-10 bg-slate-900">
                 <thead>
-                    <tr className="bg-gray-200">
+                    <tr className="bg-slate-900">
                         <th className="py-2 px-4">Product ID</th>
                         <th className="py-2 px-4">Product Name</th>
                         <th className="py-2 px-4">Product Location</th>
@@ -160,7 +160,7 @@ const ProductList = () => {
                 </thead>
                 <tbody>
                     {products.map((product) => (
-                        <tr key={product._id} className="hover:bg-gray-100">
+                        <tr key={product._id} className="hover:bg-slate-600">
                             <td className="py-2 px-4">{product._id}</td>
                             <td className="py-2 px-4">{product.name}</td>
                             <td className="py-2 px-4">{product.location}</td>
@@ -169,13 +169,13 @@ const ProductList = () => {
                             <td className="py-2 px-4">{product.slots}/200</td>
                             <td className="flex space-x-2 py-2 px-4">
                                 <button
-                                    className="bg-blue-500 text-white px-2 py-1 rounded"
+                                    className="bg-blue-500 text-neutral-100 px-2 py-1 rounded"
                                     onClick={() => handleEditProduct(product)}
                                 >
                                     Edit
                                 </button>
                                 <button
-                                    className="bg-red-500 text-white px-2 py-1 rounded"
+                                    className="bg-red-500 text-neutral-100 px-2 py-1 rounded"
                                     onClick={() => handleDeleteProduct(product._id)}
                                 >
                                     Delete
@@ -188,13 +188,13 @@ const ProductList = () => {
 
             <div className="w-full max-w-3xl">
                 <h2 className="text-xl font-bold mb-4">{isEditing ? 'Edit Product' : 'Add Product'}</h2>
-                <form className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 grid grid-cols-2 gap-4">
+                <form className="bg-slate-900 text-neutral-100 shadow-md rounded px-8 pt-6 pb-8 mb-4 grid grid-cols-2 gap-4">
                     <div className="mb-4 col-span-2 sm:col-span-1">
-                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="name">
+                        <label className="block text-sm font-bold mb-2" htmlFor="name">
                             Name
                         </label>
                         <input
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                            className="shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline bg-slate-700 text-neutral-100"
                             id="name"
                             name="name"
                             type="text"
@@ -203,11 +203,11 @@ const ProductList = () => {
                         />
                     </div>
                     <div className="mb-4 col-span-2 sm:col-span-1">
-                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="location">
+                        <label className="block text-sm font-bold mb-2" htmlFor="location">
                             Location
                         </label>
                         <input
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                            className="shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline bg-slate-700 text-neutral-100"
                             id="location"
                             name="location"
                             type="text"
@@ -216,11 +216,11 @@ const ProductList = () => {
                         />
                     </div>
                     <div className="mb-4 col-span-2 sm:col-span-1">
-                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="type">
+                        <label className="block text-sm font-bold mb-2" htmlFor="type">
                             Type
                         </label>
                         <input
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                            className="shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline bg-slate-700 text-neutral-100"
                             id="type"
                             name="type"
                             type="text"
@@ -229,11 +229,11 @@ const ProductList = () => {
                         />
                     </div>
                     <div className="mb-4 col-span-2 sm:col-span-1">
-                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="slots">
+                        <label className="block text-sm font-bold mb-2" htmlFor="slots">
                             Slots
                         </label>
                         <input
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                            className="shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline bg-slate-700 text-neutral-100"
                             id="slots"
                             name="slots"
                             type="number"
@@ -242,11 +242,11 @@ const ProductList = () => {
                         />
                     </div>
                     <div className="mb-4 col-span-2 sm:col-span-1">
-                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="flagUrl">
+                        <label className="block text-sm font-bold mb-2" htmlFor="flagUrl">
                             Flag URL (Optional)
                         </label>
                         <input
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                            className="shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline bg-slate-700 text-neutral-100"
                             id="flagUrl"
                             name="flagUrl"
                             type="text"
@@ -255,11 +255,11 @@ const ProductList = () => {
                         />
                     </div>
                     <div className="mb-4 col-span-2 sm:col-span-1">
-                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="flagFile">
+                        <label className="block text-sm font-bold mb-2" htmlFor="flagFile">
                             Flag File (Optional)
                         </label>
                         <input
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                            className="shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline bg-slate-700 text-neutral-100"
                             id="flagFile"
                             name="flagFile"
                             type="file"
@@ -267,11 +267,11 @@ const ProductList = () => {
                         />
                     </div>
                     <div className="mb-4 col-span-2 sm:col-span-1">
-                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="priceId">
+                        <label className="block text-sm font-bold mb-2" htmlFor="priceId">
                             Price ID
                         </label>
                         <input
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                            className="shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline bg-slate-700 text-neutral-100"
                             id="priceId"
                             name="priceId"
                             type="text"
@@ -281,7 +281,7 @@ const ProductList = () => {
                     </div>
                     <div className="flex items-center justify-between col-span-2">
                         <button
-                            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                            className="bg-indigo-500 hover:bg-indigo-700 text-neutral-100 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
                             type="button"
                             onClick={isEditing ? handleUpdateProduct : handleAddProduct}
                         >

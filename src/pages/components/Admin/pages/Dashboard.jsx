@@ -6,9 +6,9 @@ import RecentOrders from './DashboardItems/RecentOrders'
 
 const Dashboard = () => {
     return (
-        <div>
+        <div className='bg-slate-900 h-screen'>
             <Header />
-            <div className='flex flex-col gap-4'>
+            <div className='flex flex-col gap-4 py-6'>
                 <StatsGrid />
                 <TransactionChart />
             </div>

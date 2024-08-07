@@ -1,39 +1,34 @@
 import { LuChevronFirst, LuChevronLast } from "react-icons/lu";
 import { createContext, useContext, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 const SidebarContext = createContext();
 
 export default function Sidebar({ children, userInfo }) {
     const [expanded, setExpanded] = useState(true);
-    const [showLogout, setShowLogout] = useState(false);
-    const navigate = useNavigate();
 
     return (
-        <aside className={`h-screen ${expanded ? 'w-64' : 'w-20'} transition-all duration-300 bg-neutral-800`}>
+        <aside className={`h-screen ${expanded ? 'w-64' : 'w-20'} transition-all duration-300 bg-slate-800`}>
             <nav className="h-full flex flex-col border-r shadow-sm">
                 <div className="p-4 pb-2 flex justify-between items-center">
                     <img src='https://files.catbox.moe/vzv3w2.png' className={`overflow-hidden transition-all ${expanded ? "w-32" : "w-0"}`} alt='' />
-                    <button onClick={() => setExpanded((curr) => !curr)} className="p-1.5 rounded-lg bg-gray-500 hover:bg-gray-100">
+                    <button onClick={() => setExpanded((curr) => !curr)} className="p-1.5 rounded-lg bg-gray-500 hover:bg-gray-300">
                         {expanded ? <LuChevronFirst /> : <LuChevronLast />}
                     </button>
                 </div>
                 <SidebarContext.Provider value={{ expanded }}>
                     <ul className="flex-1 px-3">{children}</ul>
                 </SidebarContext.Provider>
-                <div className="relative border-t flex p-3">
-                    {userInfo && (
-                        <>
-                            <img src={userInfo.profilePicture} alt={userInfo.username} className="w-10 h-10 rounded-md" />
-                            <div className={`flex justify-between items-center overflow-hidden transition-all ${expanded ? "w-52 ml-3" : "w-0"}`}>
-                                <div className='leading-4'>
-                                    <h4 className='font-semibold text-white'>{userInfo.username}</h4>
-                                    <span className="text-xs text-gray-300">{userInfo.email}</span>
-                                </div>
+                {userInfo && (
+                    <div className="border-t flex p-3">
+                        <img src={userInfo.profilePicture} alt={userInfo.username} className="w-10 h-10 rounded-md" />
+                        <div className={`flex items-center overflow-hidden transition-all ${expanded ? "w-52 ml-3" : "w-0"}`}>
+                            <div className='leading-4'>
+                                <h4 className='font-semibold text-white'>{userInfo.username}</h4>
+                                <span className="text-xs text-gray-300">{userInfo.email}</span>
                             </div>
-                        </>
-                    )}
-                </div>
+                        </div>
+                    </div>
+                )}
             </nav>
         </aside>
     );

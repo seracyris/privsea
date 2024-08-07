@@ -7,7 +7,7 @@ export default function Sidebar({ children, userInfo }) {
     const [expanded, setExpanded] = useState(true);
 
     return (
-        <aside className={`h-screen ${expanded ? 'w-64' : 'w-20'} transition-all duration-300 bg-neutral-800`}>
+        <aside className={`h-screen ${expanded ? 'w-64' : 'w-20'} transition-all duration-300 bg-slate-700`}>
             <nav className="h-full flex flex-col border-r shadow-sm">
                 <div className="p-4 pb-2 flex justify-between items-center">
                     <div className={`overflow-hidden transition-all text-white text-2xl ${expanded ? "w-32" : "w-0"}`}>

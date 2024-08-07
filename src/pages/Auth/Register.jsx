@@ -2,42 +2,50 @@ import React, { useState } from 'react';
 import Cyber from '../assets/cyber-bg.png';
 import { IoIosEye, IoIosEyeOff } from "react-icons/io";
 import { FaDiscord } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
-const CreatePopup = ({ trigger, setTrigger, setLoginPopup }) => {
+const Register = () => {
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+    const navigate = useNavigate();
 
     const handleSignup = async (event) => {
         event.preventDefault();
-        const response = await fetch('http://localhost:1337/auth/create', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                username,
-                email,
-                password
-            })
-        });
+        try {
+            const response = await fetch('http://localhost:1337/auth/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username,
+                    email,
+                    password
+                })
+            });
 
-        const data = await response.json();
-        if (data.status === 'success') {
-            alert('Signup Success');
-            localStorage.setItem('token', data.user);
-            window.location.href = '/profile';
-        } else {
-            alert('Error creating account: ' + data.error);
+            const data = await response.json();
+            if (data.status === 'success') {
+                toast.success('Signup successful!');
+                localStorage.setItem('token', data.user);
+                window.location.href = '/profile';
+            } else {
+                toast.error('Error creating account: ' + data.error);
+            }
+        } catch (error) {
+            toast.error('An error occurred during signup. Please try again.');
         }
     };
 
-    return (trigger) ? (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+    return (
+        <div className="flex items-center justify-center min-h-screen bg-gray-100">
+            <ToastContainer />
             <div className="bg-white rounded-lg shadow-lg min-w-[50%] p-5 flex">
                 <div className="w-full md:w-1/2 p-10 relative flex flex-col text-black">
-                    <button className="absolute right-10 top-8 text-black hover:text-red-500" onClick={() => setTrigger(false)}>X</button>
                     <h2 className="font-bold text-2xl">Sign up</h2>
                     <p className="text-sm mt-4">Let's get you encrypted</p>
                     <form className="flex flex-col gap-4" onSubmit={handleSignup}>
@@ -62,7 +70,7 @@ const CreatePopup = ({ trigger, setTrigger, setLoginPopup }) => {
                     </button>
                     <div className="text-xs flex justify-between items-center mt-5">
                         <p>Already have an account?</p>
-                        <button className="py-2 px-5 bg-transparent text-sky-600 underline border-none hover:scale-105 duration-300" onClick={() => { setTrigger(false); setLoginPopup(true); }}>Login</button>
+                        <button className="py-2 px-5 bg-transparent text-sky-600 underline border-none hover:scale-105 duration-300" onClick={() => navigate('/auth/login')}>Login</button>
                     </div>
                 </div>
                 <div className="hidden md:block">
@@ -70,7 +78,7 @@ const CreatePopup = ({ trigger, setTrigger, setLoginPopup }) => {
                 </div>
             </div>
         </div>
-    ) : null;
+    );
 };
 
-export default CreatePopup;
+export default Register;

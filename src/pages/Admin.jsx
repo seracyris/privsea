@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar, { SideBarItem } from '../pages/components/Admin/Sidebar';
 import {
@@ -6,9 +6,6 @@ import {
     HiOutlineCube,
     HiOutlineShoppingCart,
     HiOutlineUsers,
-    HiOutlineDocumentText,
-    HiOutlineAnnotation,
-    HiOutlineQuestionMarkCircle,
     HiOutlineCog,
     HiOutlineLogout
 } from 'react-icons/hi';
@@ -18,7 +15,7 @@ import { useAuth } from '../AuthContext';
 
 const Admin = () => {
     const [activePage, setActivePage] = useState('Dashboard');
-    const { isLoggedIn, setIsLoggedIn, userDetails, setUserDetails } = useAuth();
+    const { setIsLoggedIn, userDetails, setUserDetails } = useAuth();
     const [isAdmin, setIsAdmin] = useState(null);
     const navigate = useNavigate();
 
@@ -69,7 +66,11 @@ const Admin = () => {
     };
 
     if (isAdmin === null) {
-        return <div>Loading...</div>; // or a loading indicator
+        return (
+            <div className="flex justify-center items-center bg-slate-900">
+                <div className="w-16 h-16 border-4 border-indigo-500 border-dotted rounded-full animate-spin"></div>
+            </div>
+        );
     }
 
     if (!isAdmin) {
@@ -103,31 +104,12 @@ const Admin = () => {
                     active={activePage === 'Customers'}
                     text="Customers"
                 />
-                <SideBarItem
-                    onClick={() => handlePageClick('Transactions')}
-                    icon={<HiOutlineDocumentText size={20} />}
-                    active={activePage === 'Transactions'}
-                    text="Transactions"
-                    alert
-                />
-                <SideBarItem
-                    onClick={() => handlePageClick('Messages')}
-                    icon={<HiOutlineAnnotation size={20} />}
-                    active={activePage === 'Messages'}
-                    text="Messages"
-                />
                 <div className='flex flex-col gap-0.5 pt-2 border-t border-neutral-700'>
                     <SideBarItem
                         onClick={() => handlePageClick('Settings')}
                         icon={<HiOutlineCog size={20} />}
                         active={activePage === 'Settings'}
                         text="Settings"
-                    />
-                    <SideBarItem
-                        onClick={() => handlePageClick('Help')}
-                        icon={<HiOutlineQuestionMarkCircle size={20} />}
-                        active={activePage === 'Help'}
-                        text="Help & Support"
                     />
                     <SideBarItem
                         onClick={() => handleLogout()}

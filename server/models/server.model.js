@@ -6,6 +6,7 @@ const ServerSchema = new mongoose.Schema({
     type: String,
     slots: Number,
     flagUrl: String,
+    downloadUrl: String,
     plans: [{
         duration: String,
         priceId: String,

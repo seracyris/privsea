@@ -2,10 +2,7 @@ import Dashboard from './pages/Dashboard'
 import Products from './pages/Products'
 import Orders from './pages/Orders'
 import Customers from './pages/Customers'
-import Transactions from './pages/Transactions'
-import Messages from './pages/Messages'
 import Settings from './pages/Settings'
-import Help from './pages/Help'
 import React from 'react';
 
 const componentMap = {
@@ -13,10 +10,7 @@ const componentMap = {
     Products: Products,
     Orders: Orders,
     Customers: Customers,
-    Transactions: Transactions,
-    Messages: Messages,
     Settings: Settings,
-    Help: Help
 }
 
 const PageLayout = (props) => {

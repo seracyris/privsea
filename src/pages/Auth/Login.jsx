@@ -4,8 +4,10 @@ import { IoIosEye, IoIosEyeOff } from "react-icons/io";
 import { FaDiscord } from 'react-icons/fa';
 import { useAuth } from '../../AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
-const LoginPopup = ({ trigger, setTrigger, setCreatePopup }) => {
+const Login = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -14,54 +16,63 @@ const LoginPopup = ({ trigger, setTrigger, setCreatePopup }) => {
 
     const handleLogin = async (event) => {
         event.preventDefault();
-        const response = await fetch('http://localhost:1337/auth/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                username,
-                password
-            })
-        });
+        try {
+            const response = await fetch('http://localhost:1337/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username,
+                    password
+                })
+            });
 
-        const data = await response.json();
-        if (data.status === 'success') {
-            localStorage.setItem('token', data.user);
-            fetchUserDetails(data.user);
-        } else {
-            alert('Invalid Credentials');
+            const data = await response.json();
+            if (data.status === 'success') {
+                localStorage.setItem('token', data.user);
+                toast.success('Login successful!');
+                fetchUserDetails(data.user);
+            } else {
+                toast.error('Invalid Credentials');
+            }
+        } catch (error) {
+            toast.error('An error occurred during login. Please try again.');
         }
     };
 
     const fetchUserDetails = async (token) => {
-        const response = await fetch('http://localhost:1337/user', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            }
-        });
+        try {
+            const response = await fetch('http://localhost:1337/user', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
 
-        const data = await response.json();
-        if (data.status === 'success') {
-            setUserDetails(data.user);
-            setIsLoggedIn(true);
-            if (data.user.userType === 'admin') {
-                navigate('/admin');
+            const data = await response.json();
+            if (data.status === 'success') {
+                setUserDetails(data.user);
+                setIsLoggedIn(true);
+                if (data.user.userType === 'admin') {
+                    navigate('/admin');
+                } else {
+                    navigate('/profile');
+                }
             } else {
-                navigate('/profile');
+                toast.error('Failed to fetch user details');
             }
-        } else {
-            alert('Failed to fetch user details');
+        } catch (error) {
+            toast.error('An error occurred while fetching user details. Please try again.');
         }
     };
 
-    return (trigger) ? (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+    return (
+        <div className="flex items-center justify-center min-h-screen bg-gray-100">
+            <ToastContainer />
             <div className="bg-white rounded-lg shadow-lg min-w-[50%] p-5 flex text-black">
                 <div className="w-full md:w-1/2 p-10 relative flex flex-col">
-                    <button className="absolute right-10 top-8 text-black hover:text-red-500" onClick={() => setTrigger(false)}>X</button>
                     <h2 className="font-bold text-2xl">Login</h2>
                     <p className="text-sm mt-4">Already a member? Sign in.</p>
                     <form className="flex flex-col gap-4" onSubmit={handleLogin}>
@@ -85,7 +96,7 @@ const LoginPopup = ({ trigger, setTrigger, setCreatePopup }) => {
                     </button>
                     <div className="text-xs flex justify-between items-center mt-5">
                         <p>Don't have an account?</p>
-                        <button className="py-2 px-5 bg-transparent text-sky-600 underline border-none hover:scale-105 duration-300" onClick={() => { setTrigger(false); setCreatePopup(true); }}>Register</button>
+                        <button className="py-2 px-5 bg-transparent text-sky-600 underline border-none hover:scale-105 duration-300" onClick={() => navigate('/auth/register')}>Register</button>
                     </div>
                 </div>
                 <div className="hidden md:block">
@@ -93,7 +104,7 @@ const LoginPopup = ({ trigger, setTrigger, setCreatePopup }) => {
                 </div>
             </div>
         </div>
-    ) : null;
+    );
 };
 
-export default LoginPopup;
+export default Login;

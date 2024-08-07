@@ -1,22 +1,24 @@
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
-const stripe = require('stripe')('sk_test_51PeAYLBHxmLuJS3w0gkD3LtTdKZxMh2MEvdA9OP5YJA4RJvZWOMkTM8wc7hpydJ2vTeQQf2JER1TMjtFsEBk5Zv300tv4gchsJ');
+const stripe = require('stripe')('pk_live_51PeAYLBHxmLuJS3wvISfgVXLjYWLqQrKxhqFnP3ZRDxAsTtvAcsW6Dvz1bmqw3vUVMI05b7beUxbUyC4ZszGZYKx00wawJMuzUJ'); // Use your actual secret key
 const jwt = require('jsonwebtoken');
 const passport = require('passport');
 const DiscordStrategy = require('passport-discord').Strategy;
 const session = require('express-session');
 const User = require('./models/user.model');
 const Server = require('./models/server.model');
+const profileRoutes = require('./routes/profile.routes'); // Import the profile routes
 
 const app = express();
+const PORT = 1337;
+
 app.use(cors());
 app.use(express.json());
+app.use(express.static('public'));
 app.use(session({ secret: 'MQlaYtLjqRWkHfJeGycx', resave: false, saveUninitialized: false }));
 app.use(passport.initialize());
 app.use(passport.session());
-
-const PORT = 1337;
 
 mongoose.connect('mongodb+srv://seracyris:JHzgwdZq4G0WB0OX@privsea.vksgqbj.mongodb.net/privsea', { useNewUrlParser: true, useUnifiedTopology: true });
 
@@ -37,13 +39,40 @@ passport.use(new DiscordStrategy({
 }, async (accessToken, refreshToken, profile, done) => {
     try {
         let user = await User.findOne({ discordId: profile.id });
+
         if (!user) {
-            user = new User({
-                discordId: profile.id,
-                username: profile.username,
-                email: profile.email,
-                profilePicture: `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png`
-            });
+            // Check if a user exists with the same email
+            user = await User.findOne({ email: profile.email });
+            if (user) {
+                user.discordId = profile.id;
+                user.username = profile.username;
+                user.email = profile.email;
+                user.profilePicture = `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png`;
+                await user.save();
+            } else {
+                // Check if a user exists with the same username
+                user = await User.findOne({ username: profile.username });
+                if (user) {
+                    user.discordId = profile.id;
+                    user.username = profile.username;
+                    user.email = profile.email;
+                    user.profilePicture = `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png`;
+                    await user.save();
+                } else {
+                    user = new User({
+                        discordId: profile.id,
+                        username: profile.username,
+                        email: profile.email,
+                        profilePicture: `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png`
+                    });
+                    await user.save();
+                }
+            }
+        } else {
+            user.discordId = profile.id;
+            user.username = profile.username;
+            user.email = profile.email;
+            user.profilePicture = `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png`;
             await user.save();
         }
         done(null, user);
@@ -64,21 +93,57 @@ app.get('/auth/discord/callback', passport.authenticate('discord', {
 app.post('/create-payment-intent', async (req, res) => {
     const { priceId, userId, serverId, duration } = req.body;
     try {
+        console.log("Received data for creating payment intent:", req.body);
+
+        // Retrieve the price from Stripe using priceId
         const price = await stripe.prices.retrieve(priceId);
         if (!price) {
             return res.status(404).json({ error: 'Price not found' });
         }
 
+        // Create a new payment intent
         const paymentIntent = await stripe.paymentIntents.create({
             amount: price.unit_amount,
             currency: price.currency,
             payment_method_types: ['card'],
             metadata: { userId, serverId, duration }
         });
+
+        console.log("Payment Intent created successfully:", paymentIntent);
         res.send({ clientSecret: paymentIntent.client_secret });
     } catch (error) {
-        console.error('Error creating payment intent:', error);
+        console.error('Error creating payment intent:', error.message);
         res.status(500).json({ error: error.message });
+    }
+});
+
+
+app.get('/transactions', async (req, res) => {
+    try {
+        const token = req.headers.authorization.split(' ')[1];
+        const decoded = jwt.verify(token, 'MQlaYtLjqRWkHfJeGycx');
+        const userId = decoded.userID;
+
+        const user = await User.findById(userId).select('plans transactions');
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const transactionsWithStatus = user.transactions.map(transaction => {
+            const plan = user.plans.find(plan =>
+                plan.serverId.toString() === transaction.serverId.toString() &&
+                plan.duration === transaction.duration
+            );
+            return {
+                ...transaction._doc,
+                status: plan ? plan.status : 'unknown'
+            };
+        });
+
+        res.json({ transactions: transactionsWithStatus });
+    } catch (error) {
+        console.error('Failed to fetch transactions:', error);
+        res.status(500).send('Internal Server Error');
     }
 });
 
@@ -87,10 +152,13 @@ app.post('/purchase', async (req, res) => {
 
     try {
         const server = await Server.findById(serverId);
-        const plan = server.plans.find(plan => plan.duration === duration);
+        if (!server) {
+            return res.status(404).send('Server not found');
+        }
 
+        const plan = server.plans.find(plan => plan.duration === duration);
         if (!plan) {
-            throw new Error('Plan not found for the specified duration');
+            return res.status(404).send('Plan not found for the specified duration');
         }
 
         const paymentIntent = await stripe.paymentIntents.create({
@@ -103,17 +171,32 @@ app.post('/purchase', async (req, res) => {
         console.log('Payment intent confirmed:', paymentIntent);
 
         const user = await User.findById(userId);
-        user.plans.push({
+        if (!user) {
+            return res.status(404).send('User not found');
+        }
+
+        // Add transaction to user document
+        user.transactions.push({
+            userId: user._id,
             serverId,
             duration,
-            status: 'active'
+            planDetails: {
+                serverId: plan.serverId,
+                serverName: plan.serverName,
+                duration: plan.duration
+            },
+            price: plan.price,
         });
-        await user.save();
 
-        res.json({ success: true });
+        await user.save(); // Save the updated user document
+
+        // Log the updated user document to verify changes
+        console.log('Updated User:', user);
+
+        res.json({ message: 'Purchase successful and transaction added to user.' });
     } catch (error) {
-        console.error('Error processing purchase:', error);
-        res.json({ success: false, error: error.message });
+        console.error('Purchase failed:', error);
+        res.status(500).send('Internal Server Error');
     }
 });
 
@@ -185,14 +268,15 @@ app.get('/user', async (req, res) => {
 });
 
 app.post('/user/update-plan', async (req, res) => {
-    const { userId, serverId, duration, serverName } = req.body;
+    const { userId, serverId, duration, serverName, transaction } = req.body;
     console.log('Received data:', req.body);
 
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
-        const user = await User.findById(userId).session(session);
+        // Exclude the password field when fetching the user
+        const user = await User.findById(userId).select('-password').session(session);
         const server = await Server.findById(serverId).session(session);
 
         if (!user) {
@@ -218,6 +302,9 @@ app.post('/user/update-plan', async (req, res) => {
             serverName,
         });
 
+        // Add transaction to the user
+        user.transactions.push(transaction);
+
         await server.save({ session });
         await user.save({ session });
 
@@ -233,6 +320,21 @@ app.post('/user/update-plan', async (req, res) => {
     }
 });
 
+// Add this endpoint to fetch user by Discord ID
+app.get('/user/by-discord-id/:discordId', async (req, res) => {
+    try {
+        const discordId = req.params.discordId;
+        const user = await User.findOne({ discordId }).select('-password'); // Exclude password from the response
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.json(user);
+    } catch (error) {
+        console.error('Error fetching user:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
 app.post('/user/remove-plan', async (req, res) => {
     const { userId, serverId, duration } = req.body;
     console.log('Received data:', req.body);
@@ -241,7 +343,7 @@ app.post('/user/remove-plan', async (req, res) => {
     session.startTransaction();
 
     try {
-        const user = await User.findById(userId).session(session);
+        const user = await User.findById(userId).select('-password').session(session);
         const server = await Server.findById(serverId).session(session);
 
         if (!user) {
@@ -252,13 +354,13 @@ app.post('/user/remove-plan', async (req, res) => {
             throw new Error('Server not found');
         }
 
-        // Find and remove the plan from the user
-        const planIndex = user.plans.findIndex(plan => plan.serverId.toString() === serverId && plan.duration === duration);
-        if (planIndex === -1) {
+        // Find the plan and update its status to 'inactive'
+        const plan = user.plans.find(plan => plan.serverId.toString() === serverId && plan.duration === duration);
+        if (!plan) {
             throw new Error('Plan not found');
         }
 
-        user.plans.splice(planIndex, 1);
+        plan.status = 'inactive';
 
         // Add a slot back to the server
         server.slots += 1;
@@ -278,6 +380,39 @@ app.post('/user/remove-plan', async (req, res) => {
     }
 });
 
+// Add new embedded checkout session creation endpoint
+app.post('/create-checkout-session', async (req, res) => {
+    const { priceId, userId, serverId, duration } = req.body;
+    try {
+        const session = await stripe.checkout.sessions.create({
+            ui_mode: 'embedded',
+            line_items: [
+                {
+                    price: priceId,
+                    quantity: 1,
+                },
+            ],
+            mode: 'payment',
+            return_url: `http://localhost:3000/return?session_id={CHECKOUT_SESSION_ID}`,
+            automatic_tax: { enabled: true },
+        });
+        res.send({ clientSecret: session.client_secret });
+    } catch (error) {
+        console.error('Error creating checkout session:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/session-status', async (req, res) => {
+    const session = await stripe.checkout.sessions.retrieve(req.query.session_id);
+    res.send({
+        status: session.status,
+        customer_email: session.customer_details.email
+    });
+});
+
+app.use('/api', profileRoutes); // Use the profile routes
+
 app.get('/users', async (req, res) => {
     try {
         const users = await User.find().select('-password'); // Exclude passwords from the response
@@ -287,12 +422,73 @@ app.get('/users', async (req, res) => {
     }
 });
 
+app.get('/users/total', async (req, res) => {
+    try {
+        const total = await User.countDocuments();
+        res.json({ total });
+    } catch (error) {
+        console.error('Failed to fetch total users:', error);
+        res.status(500).json({ error: 'Failed to fetch total users' });
+    }
+});
+
 app.get('/servers', async (req, res) => {
     try {
         const servers = await Server.find();
         res.json({ servers });
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch servers' });
+    }
+});
+
+app.get('/server-uptime', async (req, res) => {
+    try {
+        const urls = [
+            'http://15.204.12.146:7384/server-uptime',
+            'http://51.68.202.104:7384/server-uptime',
+            'http://135.148.57.149:7384/server-uptime'
+        ];
+
+        const fetchUptime = async (url) => {
+            try {
+                const fetch = (await import('node-fetch')).default;
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch from ${url} with status ${response.status}`);
+                }
+                const data = await response.json();
+                return data.status;
+            } catch (error) {
+                console.error(`Error fetching data from ${url}:`, error.message); // Enhanced logging
+
+                if (url.includes('15.204.12.146')) {
+                    return { name: 'Oregon', location: 'USA', uptime: 'Offline', cpuUsage: 'N/A' };
+                } else if (url.includes('51.68.202.104')) {
+                    return { name: 'London', location: 'UK', uptime: 'Offline', cpuUsage: 'N/A' };
+                } else if (url.includes('135.148.57.149')) {
+                    return { name: 'Virginia', location: 'USA', uptime: 'Offline', cpuUsage: 'N/A' };
+                }
+                return { name: 'Unknown', location: 'Unknown', uptime: 'Offline', cpuUsage: 'N/A' };
+            }
+        };
+
+        const uptimes = await Promise.all(urls.map(fetchUptime));
+
+        res.json({ uptimes });
+    } catch (error) {
+        console.error('Error fetching server uptime:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/users/transactions', async (req, res) => {
+    try {
+        const users = await User.find().select('transactions');
+        const transactions = users.flatMap(user => user.transactions);
+        res.json(transactions);
+    } catch (error) {
+        console.error('Error fetching transactions:', error);
+        res.status(500).json({ error: 'Failed to fetch transactions' });
     }
 });
 
